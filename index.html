@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>CAPITAL WINS // a beautiful, unhinged satire</title>
+<style>
+  :root{
+    --bg:#0b0b12;
+    --ink:#f8f8ff;
+    --muted:#9aa0a6;
+    --cyan:#00ffd5;
+    --mag:#ff2bd6;
+    --gold:#ffd166;
+    --red:#ff3864;
+    --blue:#68e1fd;
+    --green:#5af78e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:400 14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+  canvas{position:fixed;inset:0;display:block;width:100vw;height:100vh}
+  .ui{
+    position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:16px;
+    text-shadow: 0 0 10px rgba(255,255,255,0.08), 0 0 30px rgba(0,255,213,0.08);
+  }
+  .hud{
+    display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;max-width:100vw;
+    mix-blend-mode:screen;
+  }
+  .stat{
+    background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+    border:1px solid rgba(255,255,255,0.08); border-radius:12px;padding:8px 12px;backdrop-filter: blur(4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25), inset 0 0 30px rgba(255,255,255,0.03);
+    pointer-events:none;
+  }
+  .stat b{letter-spacing:0.06em}
+  .bar{height:6px;border-radius:6px;background:rgba(255,255,255,0.08);margin-top:6px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--mag),var(--gold));filter:saturate(1.2)}
+  .corner{
+    display:flex;justify-content:flex-end;align-items:flex-end;gap:12px;flex-wrap:wrap
+  }
+  .title{
+    font-weight:800;font-size:clamp(16px,2.8vw,28px);
+    letter-spacing:.12em;text-transform:uppercase;
+    color:var(--gold);
+    text-shadow:
+      0 0 20px rgba(255,209,102,0.25),
+      0 0 60px rgba(255,43,214,0.12),
+      0 0 120px rgba(0,255,213,0.12);
+  }
+  .subtitle{color:var(--muted);font-size:12px;letter-spacing:.15em;text-transform:uppercase}
+  .center{
+    position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;
+    padding:24px;text-align:center
+  }
+  .panel{
+    display:inline-block;max-width:min(900px,92vw);pointer-events:auto;
+    background:radial-gradient(120% 120% at 50% 0%,rgba(255,255,255,0.10),rgba(255,255,255,0.02));
+    border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px 22px 16px 22px;
+    box-shadow: 0 10px 60px rgba(0,0,0,0.5), 0 0 120px rgba(255,43,214,0.1), inset 0 0 60px rgba(255,255,255,0.04);
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-6px)}
+  }
+  .panel h1{
+    margin:0 0 8px 0;font-weight:900;letter-spacing:.12em;text-transform:uppercase;
+    background: linear-gradient(90deg,var(--cyan),var(--mag),var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter: drop-shadow(0 0 18px rgba(255,255,255,0.15));
+    font-size: clamp(24px,5vw,56px);
+  }
+  .panel p{margin:8px 0 0 0;color:#cdd3d8}
+  .btns{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  button{
+    appearance:none;border:none;cursor:pointer;padding:10px 14px;border-radius:12px;
+    background:linear-gradient(180deg,#151520,#101018);
+    color:var(--ink);border:1px solid rgba(255,255,255,0.12);font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    transition: transform .08s ease, box-shadow .12s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.3)
+  }
+  button:hover{transform:translateY(-1px);box-shadow: 0 16px 40px rgba(0,0,0,0.4)}
+  button:active{transform:translateY(0)}
+  .key{display:inline-block;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06)}
+  .toastwrap{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;pointer-events:none}
+  .toast{
+    max-width:min(480px,92vw);background:rgba(15,15,24,0.92);border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px;padding:10px 12px;color:#dfe6ec;box-shadow:0 10px 40px rgba(0,0,0,0.45);opacity:0;transform:translateY(12px);animation:toast .4s ease forwards
+  }
+  @keyframes toast{to{opacity:1;transform:translateY(0)}}
+  .choicebar{
+    position:fixed;bottom:0;left:0;right:0;display:flex;gap:10px;justify-content:center;padding:10px;pointer-events:none
+  }
+  .choice{
+    pointer-events:auto;flex:1;max-width:520px;background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));
+    border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center
+  }
+  .choice b{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+  .choice small{color:#c5cad1}
+  .chip{font-size:11px;padding:2px 6px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06)}
+  .hidden{display:none}
+  .scan{
+    position:fixed;inset:0;pointer-events:none;background:
+      repeating-linear-gradient(to bottom,rgba(255,255,255,0.04),rgba(255,255,255,0.04) 1px,transparent 1px,transparent 3px);
+    mix-blend-mode:overlay;opacity:.08
+  }
+  .sig{position:fixed;right:10px;bottom:6px;opacity:.45;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="ui">
+  <div class="hud" id="hud">
+    <div class="title">CAPITAL WINS</div>
+    <div class="stat">
+      <b>Net Worth</b>
+      <div id="nw" style="font-size:18px;margin-top:4px;color:var(--gold)">$0</div>
+    </div>
+    <div class="stat">
+      <b>Debt</b>
+      <div id="debt" style="font-size:18px;margin-top:4px;color:var(--red)">$0</div>
+      <div class="bar"><i id="debtbar" style="width:0%"></i></div>
+    </div>
+    <div class="stat">
+      <b>Hope</b>
+      <div id="hope" style="font-size:18px;margin-top:4px;color:var(--cyan)">100%</div>
+      <div class="bar"><i id="hopebar" style="width:100%;background:linear-gradient(90deg,var(--cyan),var(--blue),var(--mag))"></i></div>
+    </div>
+    <div class="stat">
+      <b>Solidarity</b>
+      <div id="sol" style="font-size:18px;margin-top:4px;color:var(--green)">0%</div>
+      <div class="bar"><i id="solbar" style="width:0%;background:linear-gradient(90deg,var(--green),var(--cyan))"></i></div>
+    </div>
+  </div>
+  <div class="corner" style="padding:6px 0">
+    <div class="subtitle">WASD/Arrows: Move • Shift: Organize Field • Space: Dash • Click: Send "Emails" • P: Pause</div>
+  </div>
+</div>
+
+<div class="center" id="intro">
+  <div class="panel">
+    <h1>CAPITAL WINS</h1>
+    <p>Welcome to the lovingly hostile arena where money prints itself and you print your resignation letters in your head. It’s gorgeous, it’s bleak, it’s funny because if we don’t laugh, we’ll unionize.</p>
+    <p style="margin-top:8px">
+      - You are Labor. A tiny neon speck. Collect paychecks, dodge consultants, and try to organize.<br>
+      - Every “upgrade” feels incredible. It also costs your soul. That’s the gag.<br>
+      - Nothing saves you from The Board. That’s the punchline.
+    </p>
+    <div class="btns">
+      <button id="start">Click to Start</button>
+      <button id="how">How to Play</button>
+    </div>
+    <p id="howp" class="hidden" style="margin-top:8px;color:#c8d0d6">
+      Move with <span class="key">WASD</span> or <span class="key">Arrows</span>. Hold <span class="key">Shift</span> to project an organizing aura that slows Capital and grows Solidarity, but drains Hope. <span class="key">Space</span> dashes. Click to send incandescently passive-aggressive Emails. Survive long enough to read the memos. Then survive longer to realize they’re all the same memo.
+    </p>
+  </div>
+</div>
+
+<div class="choicebar" id="choices"></div>
+<div class="toastwrap" id="toasts"></div>
+<div class="scan"></div>
+<div class="sig">a neon shrug in one file</div>
+
+<script>
+(()=>{
+
+// Canvas & Context
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d', { alpha: false });
+let DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
+
+function resize(){
+  const w = window.innerWidth|0, h = window.innerHeight|0;
+  DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
+  canvas.width = w * DPR; canvas.height = h * DPR;
+  canvas.style.width = w+'px'; canvas.style.height = h+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// UI elements
+const ui = {
+  net: document.getElementById('nw'),
+  debt: document.getElementById('debt'),
+  hope: document.getElementById('hope'),
+  sol: document.getElementById('sol'),
+  debtbar: document.getElementById('debtbar'),
+  hopebar: document.getElementById('hopebar'),
+  solbar: document.getElementById('solbar'),
+  intro: document.getElementById('intro'),
+  startBtn: document.getElementById('start'),
+  howBtn: document.getElementById('how'),
+  howP: document.getElementById('howp'),
+  toasts: document.getElementById('toasts'),
+  choices: document.getElementById('choices'),
+};
+
+// Simple RNG
+let seed = Math.random()*1e9|0;
+function rand(){ // xorshift32
+  seed ^= seed<<13; seed ^= seed>>>17; seed ^= seed<<5;
+  return (seed>>>0)/4294967296;
+}
+function rrange(a,b){return a+(b-a)*rand()}
+function pick(a){return a[(rand()*a.length)|0]}
+function clamp(v,a,b){return Math.max(a, Math.min(b,v))}
+function lerp(a,b,t){return a+(b-a)*t}
+function chance(p){return rand()<p}
+
+// Colors
+const COLOR = {
+  bg: '#0b0b12',
+  cyan: '#00ffd5',
+  mag: '#ff2bd6',
+  gold: '#ffd166',
+  red: '#ff3864',
+  blue: '#68e1fd',
+  green: '#5af78e',
+  ink: '#f8f8ff',
+};
+
+// Audio (minimal, generative)
+let AC, master, musicGain, sfxGain, musicStarted=false;
+function initAudio(){
+  if(AC) return;
+  AC = new (window.AudioContext||window.webkitAudioContext)();
+  master = AC.createGain(); master.gain.value = 0.9; master.connect(AC.destination);
+  musicGain = AC.createGain(); musicGain.gain.value = 0.22; musicGain.connect(master);
+  sfxGain = AC.createGain(); sfxGain.gain.value = 0.35; sfxGain.connect(master);
+}
+function beep(freq=440, dur=0.08, type='sine', gain=0.2){
+  if(!AC) return;
+  const o = AC.createOscillator();
+  const g = AC.createGain();
+  o.type = type; o.frequency.value = freq;
+  o.connect(g); g.connect(sfxGain);
+  const t = AC.currentTime;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t+0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.start(t); o.stop(t+dur+0.02);
+}
+function kick(){
+  if(!AC) return;
+  const o = AC.createOscillator();
+  const g = AC.createGain();
+  o.type = 'sine'; o.connect(g); g.connect(sfxGain);
+  const t = AC.currentTime;
+  o.frequency.setValueAtTime(140, t);
+  o.frequency.exponentialRampToValueAtTime(40, t+0.25);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(0.9,t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
+  o.start(t); o.stop(t+0.35);
+}
+function pluck(freq=320, dur=0.2){
+  if(!AC) return;
+  const o = AC.createOscillator();
+  const g = AC.createGain();
+  o.type='triangle';
+  const f = AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=8;
+  o.connect(f); f.connect(g); g.connect(sfxGain);
+  const t=AC.currentTime;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(0.4,t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.start(t); o.stop(t+dur+0.05);
+}
+function startMusic(){
+  if(musicStarted || !AC) return;
+  musicStarted = true;
+  const root = pick([110, 123.47, 130.81]); // A2, B2, C3
+  const chords = [
+    [root, root*1.26, root*1.5],
+    [root*1.122, root*1.5, root*1.888],
+    [root*0.944, root*1.26, root*1.587],
+    [root*1.259, root*1.587, root*2],
+  ];
+  const reverb = AC.createConvolver();
+  // Tiny fake reverb impulse
+  {
+    const len = 0.3*AC.sampleRate, buf = AC.createBuffer(2, len, AC.sampleRate);
+    for(let ch=0; ch<2; ch++){
+      const d = buf.getChannelData(ch);
+      for(let i=0;i<len;i++){
+        d[i] = (Math.random()*2-1) * Math.pow(1-i/len, 3) * 0.6;
+      }
+    }
+    reverb.buffer = buf;
+  }
+  const musicMix = AC.createGain(); musicMix.gain.value=0.8;
+  const revMix = AC.createGain(); revMix.gain.value=0.35;
+  musicMix.connect(musicGain); musicMix.connect(revMix); revMix.connect(musicGain); reverb.connect(musicGain);
+
+  let step = 0;
+  function playStep(){
+    if(!musicStarted) return;
+    const t = AC.currentTime + 0.05;
+    const chord = chords[step%chords.length];
+    chord.forEach((f,i)=>{
+      const o = AC.createOscillator();
+      const g = AC.createGain();
+      o.type='sine';
+      o.frequency.value=f*(1 + (Math.random()-0.5)*0.002);
+      g.gain.value=0.0;
+      o.connect(g); g.connect(musicMix); g.connect(reverb);
+      o.start(t);
+      g.gain.linearRampToValueAtTime(0.06/(i+1), t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+1.8);
+      o.stop(t+2.0);
+    });
+    // gentle tick
+    const hat = AC.createOscillator(), hg = AC.createGain();
+    hat.type='square'; hat.frequency.value=step%2?900:600;
+    hat.connect(hg); hg.connect(musicMix);
+    hg.gain.setValueAtTime(0.0001,t);
+    hg.gain.exponentialRampToValueAtTime(0.06,t+0.005);
+    hg.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
+    hat.start(t); hat.stop(t+0.06);
+    step++;
+    setTimeout(playStep, 2000);
+  }
+  playStep();
+}
+
+// Game State
+const game = {
+  running:false,
+  t:0,
+  last:0,
+  state:'intro',
+  paused:false,
+  width: () => canvas.width/DPR,
+  height: () => canvas.height/DPR,
+  worldScale:1,
+  score: 0,
+  debt: 0,
+  debtMax: 10000,
+  hope: 1,
+  solidarity: 0,
+  wage: 12, // dollars per second... lmao
+  speed: 1,
+  timers: {spawn:0, drone:0, manage:0, memo:0, choice: 8, board: 180},
+  timeAlive: 0,
+  difficulty: 1,
+};
+
+// Entities
+const player = {
+  x: 0, y: 0, vx: 0, vy: 0,
+  r: 10,
+  col: COLOR.cyan,
+  dash: 0, dashCD: 0,
+  emails: [],
+};
+const jobs = [];
+const drones = [];
+const managers = [];
+const texts = [];
+const particles = [];
+const bullets = [];
+const monolith = { x:0, y:0, r: 52, mood: 0 }; // Capital core
+
+// Input
+const keys = {};
+let mouse = {x:0,y:0,down:false};
+window.addEventListener('keydown', e=>{
+  if(e.repeat) return;
+  keys[e.key.toLowerCase()] = true;
+  if(e.key===' '){ e.preventDefault() }
+  if(e.key==='p'){ togglePause() }
+});
+window.addEventListener('keyup', e=>{
+  keys[e.key.toLowerCase()] = false;
+});
+window.addEventListener('mousemove', e=>{
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = (e.clientX-rect.left);
+  mouse.y = (e.clientY-rect.top);
+});
+window.addEventListener('mousedown', e=>{
+  mouse.down=true;
+});
+window.addEventListener('mouseup', e=>{
+  mouse.down=false;
+});
+
+ui.startBtn.addEventListener('click', ()=>{
+  ui.intro.style.display='none';
+  start();
+});
+ui.howBtn.addEventListener('click', ()=>{
+  ui.howP.classList.toggle('hidden');
+});
+
+function start(){
+  initAudio(); AC.resume();
+  startMusic();
+  game.running=true; game.state='play';
+  player.x = game.width()/2; player.y = game.height()/2 + 80;
+  monolith.x = game.width()/2; monolith.y = game.height()/2 - 30;
+  game.last = performance.now();
+  toast('Welcome to the quarterly arena. Please produce value. But like, quietly.');
+  spawnWave();
+  requestAnimationFrame(loop);
+}
+
+function togglePause(){
+  if(!game.running) return;
+  game.paused = !game.paused;
+  toast(game.paused ? 'Paused. Capital yawns.' : 'Unpaused. Capital smiles.');
+}
+
+// Visual helpers
+function drawGlowCircle(x,y,r, color, glow=18, alpha=0.9){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.shadowBlur = glow;
+  ctx.shadowColor = color;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawRing(x,y, r, w, color, glow=12, alpha=1){
+  ctx.save();
+  ctx.lineWidth = w;
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha;
+  ctx.shadowBlur = glow;
+  ctx.shadowColor = color;
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function addText(x,y,msg,col='#dfe6ec',ttl=1.2, size=12){
+  texts.push({x,y,msg,col,ttl,age:0,size});
+}
+
+function addParticles(x,y,col, n=12, speed=80, life=0.6){
+  for(let i=0;i<n;i++){
+    const a = rrange(0,Math.PI*2);
+    const v = rrange(0.3,1)*speed;
+    particles.push({
+      x,y, vx: Math.cos(a)*v, vy: Math.sin(a)*v,
+      col, life, age:0, size: rrange(1,3)
+    });
+  }
+}
+
+function toast(msg){
+  const el = document.createElement('div');
+  el.className='toast';
+  el.textContent = msg;
+  ui.toasts.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(10px)'; }, 3500);
+  setTimeout(()=> el.remove(), 4200);
+}
+
+function choiceCard(a,b){
+  ui.choices.innerHTML='';
+  ui.choices.classList.remove('hidden');
+  const make = (opt, idx)=>{
+    const el = document.createElement('div');
+    el.className='choice';
+    el.innerHTML = `<div class="chip">${idx+1}</div><div><b>${opt.title}</b><div><small>${opt.desc}</small></div></div>`;
+    el.onclick = ()=>{ pickChoice(opt) };
+    return el;
+  }
+  ui.choices.appendChild(make(a,0));
+  ui.choices.appendChild(make(b,1));
+  const onKey = (e)=>{
+    if(e.key==='1'){ pickChoice(a); cleanup() }
+    if(e.key==='2'){ pickChoice(b); cleanup() }
+  };
+  function cleanup(){ window.removeEventListener('keydown', onKey); }
+  window.addEventListener('keydown', onKey, { once:true });
+  setTimeout(()=>{ // auto-hide if ignored
+    if(ui.choices.children.length) ui.choices.classList.add('hidden');
+  }, 10000);
+}
+function pickChoice(opt){
+  ui.choices.classList.add('hidden');
+  ui.choices.innerHTML='';
+  opt.apply();
+  toast(opt.toast||'A decision that will haunt your LinkedIn.');
+}
+
+// Spawning
+function spawnJob(){
+  const margin = 40;
+  const side = pick(['top','bottom','left','right']);
+  let x,y;
+  if(side==='top'){ x = rrange(margin, game.width()-margin); y = rrange(-20, -10); }
+  if(side==='bottom'){ x = rrange(margin, game.width()-margin); y = game.height()+rrange(10,20); }
+  if(side==='left'){ x = -rrange(10,20); y = rrange(margin, game.height()-margin); }
+  if(side==='right'){ x = game.width()+rrange(10,20); y = rrange(margin, game.height()-margin); }
+  const v = rrange(30,70)*game.difficulty;
+  const a = Math.atan2(monolith.y - y, monolith.x - x) + rrange(-0.4,0.4);
+  jobs.push({x,y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, r:7, col: COLOR.gold, worth: rrange(4,16)});
+}
+function spawnDrone(){
+  drones.push({
+    x: monolith.x + rrange(-80,80), y: monolith.y+rrange(-80,80), r: 9, col: COLOR.mag, t: 0,
+    speed: rrange(60,100), greed: rrange(0.6,1.2)
+  });
+}
+function spawnManager(){
+  managers.push({
+    x: rrange(20, game.width()-20), y: rrange(20, game.height()-20),
+    r: 12, col: COLOR.blue, speed: rrange(40,70), t: 0
+  });
+}
+function spawnWave(){
+  for(let i=0;i<8;i++) spawnJob();
+  spawnDrone();
+  if(chance(0.5)) spawnManager();
+}
+
+// Collisions
+function dist2(a,b,c,d){ const dx=a-c, dy=b-d; return dx*dx+dy*dy }
+function collide(ax,ay,ar, bx,by,br){ const r=ar+br; return dist2(ax,ay,bx,by) < r*r }
+
+// Emails (bullets)
+function shoot(){
+  const dx = (mouse.x) - player.x;
+  const dy = (mouse.y) - player.y;
+  const a = Math.atan2(dy,dx);
+  const s = 240;
+  bullets.push({x:player.x, y:player.y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, r:4, col:'#ffffff', life:1.2});
+  pluck(rrange(300,520), 0.12);
+}
+
+// Choices pool
+const CHOICES = [
+  {
+    title:'Side Hustle',
+    desc:'+50% income, -20% hope regen. Nights belong to The Grind.',
+    apply:()=>{ game.wage *= 1.5; HOPE_REGEN *= 0.8 },
+    toast:'You monetized your personality. It pays in exposure and crumbs.'
+  },
+  {
+    title:'Union Whisper',
+    desc:'+20% Solidarity growth, but Managers get grumpy.',
+    apply:()=>{ SOL_GROWTH *= 1.2; MANAGER_MEANNESS *= 1.1; },
+    toast:'You whispered “union” and every Slack channel went silent.'
+  },
+  {
+    title:'Stock Options (Clown Edition)',
+    desc:'Gain $500 now. Debt ceiling rises. The vesting cliff is a cliff.',
+    apply:()=>{ game.score += 500; game.debtMax += 3000; },
+    toast:'Paper gains and real stress. Delicious.'
+  },
+  {
+    title:'Wellness App',
+    desc:'Hope regen +30%. Also, we track your breathing for “culture.”',
+    apply:()=>{ HOPE_REGEN *= 1.3; },
+    toast:'Your cortisol is performing above expectations.'
+  },
+  {
+    title:'Consultant Friends',
+    desc:'Managers move slower. Drones get hungrier anyway.',
+    apply:()=>{ MANAGER_SPEED *= 0.85; DRONE_GREED *= 1.15; },
+    toast:'PowerPoint killed a village.'
+  },
+  {
+    title:'Gig Pivot',
+    desc:'Double job spawns. Each pays slightly less. Efficiency!',
+    apply:()=>{ JOB_RATE *= 1.7; PAY_SHRINK *= 1.05; },
+    toast:'Congratulations, you’re now a brand ecosystem.'
+  },
+];
+
+// Tunables
+let HOPE_REGEN = 0.07;
+let SOL_GROWTH = 0.13;
+let MANAGER_MEANNESS = 1.0;
+let MANAGER_SPEED = 1.0;
+let DRONE_GREED = 1.0;
+let JOB_RATE = 1.0;
+let PAY_SHRINK = 1.0;
+
+// Loop
+function loop(now){
+  if(!game.running) return;
+  const dt = Math.min(0.033, (now - game.last)/1000 || 0.016);
+  game.last = now;
+  if(!game.paused) update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+// Update
+function update(dt){
+  game.t += dt;
+  game.timeAlive += dt;
+  game.difficulty = 1 + Math.min(2, game.timeAlive/100);
+
+  // Spawns
+  game.timers.spawn -= dt;
+  if(game.timers.spawn<=0){ game.timers.spawn = rrange(0.2,0.6)/(JOB_RATE*game.difficulty); spawnJob() }
+  game.timers.drone -= dt;
+  if(game.timers.drone<=0){ game.timers.drone = rrange(4,8)/game.difficulty; spawnDrone() }
+  game.timers.manage -= dt;
+  if(game.timers.manage<=0){ game.timers.manage = rrange(7,12)/game.difficulty; spawnManager() }
+  game.timers.memo -= dt;
+  if(game.timers.memo<=0){ game.timers.memo = rrange(6,10); memo() }
+  game.timers.choice -= dt;
+  if(game.timers.choice<=0){
+    game.timers.choice = rrange(18,26);
+    choiceCard(pick(CHOICES), pick(CHOICES));
+  }
+  game.timers.board -= dt;
+  if(game.timers.board<=0){
+    boardEnding();
+  }
+
+  // Hope regen
+  if(!keys['shift']) game.hope = clamp(game.hope + HOPE_REGEN*dt, 0, 1);
+
+  // Player motion
+  const acc = keys['shift'] ? 140 : 180;
+  const damp = 0.86;
+  const dashSpeed = 400;
+  const maxSpeed = 190;
+  let ax = 0, ay = 0;
+  if(keys['w']||keys['arrowup']) ay -= acc;
+  if(keys['s']||keys['arrowdown']) ay += acc;
+  if(keys['a']||keys['arrowleft']) ax -= acc;
+  if(keys['d']||keys['arrowright']) ax += acc;
+
+  // Dash
+  player.dashCD -= dt;
+  if((keys[' ']||keys['space']) && player.dashCD<=0 && game.hope>0.1){
+    const dx = (mouse.x) - player.x;
+    const dy = (mouse.y) - player.y;
+    let a = Math.atan2(dy,dx);
+    player.vx += Math.cos(a)*dashSpeed;
+    player.vy += Math.sin(a)*dashSpeed;
+    player.dash = 0.18;
+    player.dashCD = 1.2;
+    game.hope = clamp(game.hope - 0.15, 0, 1);
+    addParticles(player.x, player.y, COLOR.cyan, 18, 160, 0.5);
+    kick();
+  }
+
+  player.vx += ax*dt; player.vy += ay*dt;
+  const sp = Math.hypot(player.vx, player.vy);
+  const max = keys['shift'] ? maxSpeed*0.8 : maxSpeed;
+  if(sp>max){ player.vx *= max/sp; player.vy*=max/sp }
+  player.vx *= damp; player.vy *= damp;
+  player.x += player.vx*dt; player.y += player.vy*dt;
+
+  // Boundaries
+  player.x = clamp(player.x, 12, game.width()-12);
+  player.y = clamp(player.y, 12, game.height()-12);
+
+  // Shoot
+  if(mouse.down){
+    player.emailsTimer = (player.emailsTimer||0) - dt;
+    if(player.emailsTimer<=0){
+      player.emailsTimer = 0.16;
+      shoot();
+    }
+  }
+
+  // Bullets
+  for(let i=bullets.length-1;i>=0;i--){
+    const b=bullets[i];
+    b.life-=dt; if(b.life<=0){ bullets.splice(i,1); continue }
+    b.x += b.vx*dt; b.y += b.vy*dt;
+    // hit drones/managers
+    let hit=false;
+    for(let j=drones.length-1;j>=0;j--){
+      const d = drones[j];
+      if(collide(b.x,b.y,b.r, d.x,d.y,d.r)){
+        drones.splice(j,1); hit=true;
+        addParticles(d.x,d.y,COLOR.mag, 20, 120, 0.6);
+        addText(d.x,d.y,'synergy disrupted',COLOR.mag,1.1,11);
+        beep(220,0.06,'square',0.15);
+        game.score += 5;
+        break;
+      }
+    }
+    if(!hit){
+      for(let j=managers.length-1;j>=0;j--){
+        const m = managers[j];
+        if(collide(b.x,b.y,b.r, m.x,m.y,m.r)){
+          managers.splice(j,1); hit=true;
+          addParticles(m.x,m.y,COLOR.blue, 20, 120, 0.6);
+          addText(m.x,m.y,'policy updated',COLOR.blue,1.1,11);
+          beep(300,0.05,'square',0.12);
+          game.score += 7;
+          break;
+        }
+      }
+    }
+    if(hit){ bullets.splice(i,1); }
+  }
+
+  // Jobs
+  for(let i=jobs.length-1;i>=0;i--){
+    const j = jobs[i];
+    j.x += j.vx*dt; j.y += j.vy*dt;
+    // Attract to monolith
+    const dx = monolith.x - j.x, dy = monolith.y - j.y;
+    const dd = Math.hypot(dx,dy)+1e-6;
+    const pull = 80 / dd;
+    j.vx += dx/dd * pull * dt;
+    j.vy += dy/dd * pull * dt;
+
+    // Player collect
+    if(collide(j.x,j.y,j.r, player.x,player.y,player.r)){
+      game.score += Math.max(1, j.worth / PAY_SHRINK);
+      game.debt += Math.max(0, j.worth*0.4); // interest, baby
+      addParticles(j.x,j.y,COLOR.gold, 12, 120, 0.5);
+      addText(j.x,j.y, '+$'+j.worth.toFixed(0), COLOR.gold, 0.9, 12);
+      beep(rrange(740,860),0.05,'sine',0.1);
+      jobs.splice(i,1);
+      continue;
+    }
+    // Monolith eats
+    if(collide(j.x,j.y,j.r, monolith.x,monolith.y,monolith.r)){
+      monolith.mood = Math.min(1, monolith.mood + 0.02);
+      addParticles(j.x,j.y,COLOR.gold, 8, 60, 0.3);
+      jobs.splice(i,1);
+      if(chance(0.25)) drones.push({x:monolith.x,y:monolith.y,r:8,col:COLOR.mag,t:0,speed:rrange(60,110),greed:rrange(0.6,1.3)});
+      continue;
+    }
+
+    // Drones steal
+    for(let k=0;k<drones.length;k++){
+      const d = drones[k];
+      if(collide(j.x,j.y,j.r, d.x,d.y,d.r)){
+        // Drone took it -> speeds toward monolith
+        const a = Math.atan2(monolith.y-d.y, monolith.x-d.x);
+        d.x += Math.cos(a)*dt*d.speed*2.0;
+        d.y += Math.sin(a)*dt*d.speed*2.0;
+        addParticles(j.x,j.y,COLOR.mag, 6, 80, 0.3);
+        jobs.splice(i,1);
+        break;
+      }
+    }
+  }
+
+  // Drones AI
+  for(let i=drones.length-1;i>=0;i--){
+    const d = drones[i];
+    d.t += dt;
+    let target = player;
+    // Drones like jobs more than player unless solidarity aura is on
+    const auraActive = keys['shift'] && game.hope>0.02;
+    if(jobs.length && !auraActive){
+      target = jobs.reduce((best,o)=>{
+        const bd = dist2(d.x,d.y,best.x,best.y);
+        const nd = dist2(d.x,d.y,o.x,o.y);
+        return nd<bd?o:best;
+      }, jobs[0]);
+    }
+    const dx = target.x - d.x, dy = target.y - d.y; const dd = Math.hypot(dx,dy)+1e-6;
+    const s = d.speed * (auraActive?0.6:1.0) * game.difficulty;
+    d.x += (dx/dd)*s*dt; d.y += (dy/dd)*s*dt;
+
+    // Repel by organizing aura
+    if(auraActive){
+      const ad = Math.hypot(d.x-player.x, d.y-player.y);
+      const force = clamp(160/(ad+10),0,9);
+      d.x += (d.x-player.x)/Math.max(1,ad) * force * dt;
+      d.y += (d.y-player.y)/Math.max(1,ad) * force * dt;
+    }
+
+    // Drone hits player
+    if(collide(d.x,d.y,d.r, player.x,player.y,player.r)){
+      // Wage theft: direct hit increases debt, reduces score slightly
+      const penalty = 40 * d.greed * DRONE_GREED;
+      game.debt += penalty;
+      game.score = Math.max(0, game.score - penalty*0.25);
+      addParticles(player.x,player.y,COLOR.mag, 16, 140, 0.4);
+      addText(player.x,player.y,'unpaid overtime', COLOR.mag, 1.0, 12);
+      beep(180,0.08,'sawtooth',0.08);
+      // knockback
+      const a = Math.atan2(player.y-d.y, player.x-d.x);
+      player.vx += Math.cos(a)*140; player.vy += Math.sin(a)*140;
+    }
+
+    // Drone returns to monolith occasionally to deposit
+    if(rand()<0.002){
+      const a = Math.atan2(monolith.y-d.y, monolith.x-d.x);
+      d.x += Math.cos(a)*dt*d.speed*2.2;
+      d.y += Math.sin(a)*dt*d.speed*2.2;
+    }
+  }
+
+  // Managers AI
+  for(let i=managers.length-1;i>=0;i--){
+    const m = managers[i];
+    m.t += dt;
+    const a = Math.atan2(player.y-m.y, player.x-m.x) + Math.sin(game.t*2 + i)*0.3;
+    const s = m.speed * MANAGER_SPEED * game.difficulty;
+    m.x += Math.cos(a)*s*dt; m.y += Math.sin(a)*s*dt;
+    m.x = clamp(m.x, 8, game.width()-8); m.y = clamp(m.y,8,game.height()-8);
+    // Feel the aura
+    const auraActive = keys['shift'] && game.hope>0.02;
+    if(auraActive){
+      const ad = Math.hypot(m.x-player.x, m.y-player.y);
+      const slow = clamp(1 - 120/(ad+90), 0.4, 1.0);
+      m.x -= Math.cos(a)*s*dt*(1-slow);
+      m.y -= Math.sin(a)*s*dt*(1-slow);
+    }
+    // Collision with player -> policy "optimization"
+    if(collide(m.x,m.y,m.r, player.x,player.y,player.r)){
+      const cut = 1 + 0.08*MANAGER_MEANNESS;
+      game.wage = Math.max(1, game.wage* (1-0.06*MANAGER_MEANNESS));
+      game.hope = clamp(game.hope - 0.18, 0, 1);
+      addParticles(player.x,player.y,COLOR.blue, 20, 120, 0.5);
+      addText(player.x,player.y,'reorg', COLOR.blue, 1.0, 12);
+      beep(120,0.1,'triangle',0.09);
+      // bounce
+      const a2 = Math.atan2(player.y-m.y, player.x-m.x);
+      player.vx += Math.cos(a2)*150; player.vy += Math.sin(a2)*150;
+    }
+  }
+
+  // Organizing aura
+  if(keys['shift'] && game.hope>0.02){
+    game.hope = clamp(game.hope - dt*0.25, 0, 1);
+    game.solidarity = clamp(game.solidarity + dt*SOL_GROWTH* (1 - game.solidarity*0.7), 0, 1);
+    if(chance(0.02)){
+      addText(player.x+rrange(-20,20),player.y+rrange(-20,20), pick(['no one alone','3% COLA','we are many','coffee break']), COLOR.green, 0.7, 10);
+    }
+  }
+
+  // Particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.age += dt; if(p.age>=p.life){ particles.splice(i,1); continue }
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    p.vx *= 0.98; p.vy *= 0.98;
+  }
+
+  // Floating texts
+  for(let i=texts.length-1;i>=0;i--){
+    const t = texts[i];
+    t.age += dt;
+    t.y -= dt*20;
+    if(t.age>=t.ttl) texts.splice(i,1);
+  }
+
+  // Bullets cull at edges
+  for(let i=bullets.length-1;i>=0;i--){
+    const b = bullets[i];
+    if(b.x<-10||b.x>game.width()+10||b.y<-10||b.y>game.height()+10){ bullets.splice(i,1) }
+  }
+
+  // Wages accumulate over time (lol)
+  game.score += game.wage*dt;
+  // Debt snowball (interest)
+  game.debt += game.debt * 0.03 * dt;
+
+  // Update UI
+  ui.net.textContent = '$'+Math.floor(game.score).toLocaleString();
+  ui.debt.textContent = '$'+Math.floor(game.debt).toLocaleString();
+  ui.hope.textContent = Math.round(game.hope*100)+'%';
+  ui.sol.textContent = Math.round(game.solidarity*100)+'%';
+  ui.debtbar.style.width = clamp(game.debt / game.debtMax, 0, 1)*100+'%';
+  ui.hopebar.style.width = (game.hope*100)+'%';
+  ui.solbar.style.width = (game.solidarity*100)+'%';
+
+  // Lose to debt?
+  if(game.debt >= game.debtMax*1.2){
+    collapse('You drowned in interest and inspirational quotes.');
+  }
+}
+
+// Render
+function render(){
+  const w = game.width(), h = game.height();
+  // Background gradient
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0, '#090913');
+  g.addColorStop(0.5, '#0b0b12');
+  g.addColorStop(1, '#07070c');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
+
+  // Parallax city
+  drawCity();
+
+  // Monolith
+  drawMonolith();
+
+  // Jobs
+  for(const j of jobs){
+    ctx.save();
+    ctx.translate(j.x,j.y);
+    ctx.rotate(game.t*2.0);
+    ctx.fillStyle = COLOR.gold;
+    ctx.shadowBlur=8; ctx.shadowColor=COLOR.gold;
+    ctx.beginPath();
+    ctx.moveTo(0,-j.r); ctx.lineTo(j.r, j.r); ctx.lineTo(-j.r, j.r); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Drones
+  for(const d of drones){
+    drawGlowCircle(d.x,d.y,d.r, COLOR.mag, 12, 0.95);
+    ctx.save();
+    ctx.strokeStyle = COLOR.mag; ctx.lineWidth=2; ctx.globalAlpha=0.6;
+    ctx.beginPath(); ctx.moveTo(d.x-6,d.y-6); ctx.lineTo(d.x+6,d.y+6); ctx.moveTo(d.x-6,d.y+6); ctx.lineTo(d.x+6,d.y-6); ctx.stroke();
+    ctx.restore();
+  }
+
+  // Managers
+  for(const m of managers){
+    ctx.save();
+    ctx.translate(m.x,m.y);
+    ctx.rotate(Math.sin(game.t*3+m.x*0.01));
+    ctx.fillStyle = COLOR.blue; ctx.shadowBlur=10; ctx.shadowColor=COLOR.blue;
+    ctx.fillRect(-m.r,-m.r, m.r*2, m.r*2);
+    ctx.restore();
+  }
+
+  // Player
+  const p = player;
+  drawGlowCircle(p.x,p.y,p.r, COLOR.cyan, 18, 0.98);
+  drawRing(p.x,p.y,p.r+6, 2, '#ffffff', 6, 0.3);
+  // Aura
+  if(keys['shift'] && game.hope>0.02){
+    const r = 80 + 50*Math.sin(game.t*6);
+    drawRing(p.x,p.y, r, 1.8, COLOR.green, 20, 0.5);
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = COLOR.green;
+    ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Bullets
+  for(const b of bullets){
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur=8; ctx.shadowColor='#ffffff';
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Particles
+  for(const p of particles){
+    const a = 1 - p.age/p.life;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = p.col;
+    ctx.shadowBlur = 10; ctx.shadowColor = p.col;
+    ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
+    ctx.restore();
+  }
+
+  // Floating texts
+  for(const t of texts){
+    const a = 1 - t.age/t.ttl;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = t.col;
+    ctx.font = `bold ${t.size}px/1 system-ui,Segoe UI,Roboto,sans-serif`;
+    ctx.fillText(t.msg, t.x, t.y);
+    ctx.restore();
+  }
+
+  // Vignette
+  vignette();
+}
+
+function drawCity(){
+  const w = game.width(), h = game.height();
+  const layers = [
+    { y: h*0.75, color: '#0f1020', scale: 1.0, glow: COLOR.mag },
+    { y: h*0.78, color: '#0c0d18', scale: 0.8, glow: COLOR.cyan },
+    { y: h*0.82, color: '#0a0b14', scale: 0.6, glow: COLOR.gold },
+  ];
+  for(let i=0;i<layers.length;i++){
+    const L = layers[i];
+    ctx.save();
+    ctx.fillStyle = L.color;
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = L.glow;
+    // ground
+    ctx.fillRect(0,L.y,w,h-L.y);
+    // buildings
+    for(let x=0; x<w; x+= rr(x*99+i*77, 26, 90)){
+      const bw = rr(x*31+i*17, 20, 60)*L.scale;
+      const bh = rr(x*11+i*13, 50, 180)*L.scale;
+      ctx.fillRect(x, L.y-bh, bw, bh);
+      // windows
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      for(let wy=L.y-bh+10; wy<L.y-10; wy+=12){
+        if(chance(0.5)) continue;
+        ctx.fillRect(x+4, wy, bw-8, 2);
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = L.color;
+    }
+    ctx.restore();
+  }
+}
+function rr(seedish, a,b){
+  // deterministic-ish
+  const s = Math.sin(seedish*0.01 + game.t)*9999;
+  return a + (b-a)*(s - Math.floor(s));
+}
+
+function drawMonolith(){
+  const x = monolith.x, y = monolith.y, r = monolith.r;
+  const mood = monolith.mood;
+  // core
+  ctx.save();
+  const grad = ctx.createRadialGradient(x,y-10,10, x,y, r);
+  grad.addColorStop(0, 'rgba(255,255,255,0.08)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x-r*2,y-r*2,r*4,r*4);
+  drawRing(x,y,r+10, 2, COLOR.mag, 22, 0.3+0.3*Math.sin(game.t*2));
+  ctx.fillStyle = '#101020';
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = 40;
+  ctx.shadowColor = COLOR.mag;
+  ctx.fillRect(x-r,y-r, r*2, r*2);
+  ctx.strokeRect(x-r,y-r, r*2, r*2);
+  // face
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = COLOR.gold;
+  const smile = clamp( (Math.sin(game.t*0.8)+1)/2 + mood*0.8, 0, 1);
+  const e = 10;
+  ctx.fillRect(x-18,y-12, 6, 6);
+  ctx.fillRect(x+12,y-12, 6, 6);
+  ctx.beginPath();
+  ctx.moveTo(x-18,y+10);
+  ctx.quadraticCurveTo(x, y+14+smile*10, x+18,y+10);
+  ctx.strokeStyle = COLOR.gold; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+}
+
+function vignette(){
+  const w = game.width(), h = game.height();
+  const grd = ctx.createRadialGradient(w/2, h*0.65, Math.min(w,h)*0.1, w/2, h/2, Math.max(w,h)*0.8);
+  grd.addColorStop(0,'rgba(0,0,0,0)');
+  grd.addColorStop(1,'rgba(0,0,0,0.7)');
+  ctx.fillStyle = grd; ctx.fillRect(0,0,w,h);
+}
+
+// Memo popups
+function memo(){
+  const lines = [
+    'We are a family, except for benefits.',
+    'Due to market headwinds, your head is now the wind.',
+    'Great news: record profits. Hard news: not for you.',
+    'We hear you. We won’t change, but like, we hear you.',
+    'Do more with less. Then do less with nothing.',
+    'Your passion is a budget line we can cut.',
+    'We value transparency. Here is your opaque KPI.',
+    'We’re pivoting to vibes and layoffs.',
+    'We gamified burnout and you’re winning.',
+    'Automation is coming to free you from income.'
+  ];
+  toast(pick(lines));
+}
+
+// Ending
+function boardEnding(){
+  game.state='board';
+  toast('The Board convenes. The spreadsheet chants.');
+  setTimeout(()=>{
+    collapse('Automation arrived. You were a charming prototype.');
+  }, 4000);
+}
+
+function collapse(line){
+  game.running=false;
+  ui.choices.classList.add('hidden');
+  kick(); kick(); beep(80,0.3,'sawtooth',0.2);
+  const score = Math.floor(game.score).toLocaleString();
+  const debt = Math.floor(game.debt).toLocaleString();
+  const sol = Math.round(game.solidarity*100);
+  setTimeout(()=>showEpilogue(line, score, debt, sol), 600);
+}
+
+function showEpilogue(line, score, debt, sol){
+  const center = document.querySelector('.center');
+  center.innerHTML = `
+    <div class="panel">
+      <h1>Capital Won. You Played Wonderfully.</h1>
+      <p style="color:#cdd3d8">${line}</p>
+      <div style="margin-top:10px">
+        <div>Net Worth: <b style="color:var(--gold)">$${score}</b></div>
+        <div>Debt: <b style="color:var(--red)">$${debt}</b></div>
+        <div>Solidarity: <b style="color:var(--green)">${sol}%</b></div>
+      </div>
+      <p style="margin-top:10px;color:#c5cad1">In a better timeline, you keep the profits. In this one, you keep the jokes. Both are coping mechanisms.</p>
+      <div class="btns">
+        <button id="again">Play Again</button>
+        <button id="quit">Just Sit With It</button>
+      </div>
+      <p style="margin-top:8px;color:#9aa0a6">This is satire. If it feels real, that’s on the world, not you.</p>
+    </div>
+  `;
+  const again = document.getElementById('again');
+  const quit = document.getElementById('quit');
+  again.onclick = ()=>{ reset(); start() };
+  quit.onclick = ()=>{ toast('You chose reflection. It chose you back.') };
+}
+
+function reset(){
+  jobs.length=0; drones.length=0; managers.length=0; particles.length=0; texts.length=0; bullets.length=0;
+  game.running=false; game.t=0; game.last=0; game.state='intro'; game.paused=false;
+  game.score=0; game.debt=0; game.debtMax=10000; game.hope=1; game.solidarity=0; game.wage=12; game.speed=1;
+  game.timers.spawn=0; game.timers.drone=0; game.timers.manage=0; game.timers.memo=1; game.timers.choice=8; game.timers.board=180;
+  game.timeAlive=0; game.difficulty=1;
+  HOPE_REGEN=0.07; SOL_GROWTH=0.13; MANAGER_MEANNESS=1.0; MANAGER_SPEED=1.0; DRONE_GREED=1.0; JOB_RATE=1.0; PAY_SHRINK=1.0;
+  document.querySelector('.center').innerHTML='';
+}
+
+// Kick it off quietly if user clicks canvas
+canvas.addEventListener('click', ()=>{
+  if(!AC){ initAudio() }
+  if(AC && AC.state==='suspended'){ AC.resume() }
+});
+
+// Just a little initial breathing
+})();
+
+</script>
+</body>
+</html>
