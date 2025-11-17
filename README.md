@@ -117,8 +117,3 @@ Small PR suggestions:
 ## License
 
 No license file is present in the repository. If you want others to reuse or remix the game, add a license (e.g. MIT) to make permissions explicit.
-
----
-
-If you want a shorter marketing blurb, a versioned changelog, or a README with screenshots and badges, tell me which style and I'll craft it next.
-```
